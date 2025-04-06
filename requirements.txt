@@ -5,3 +5,5 @@ numpy==2.2.4
 matplotlib
 seaborn
 urlextract
+wordcloud
+spacy

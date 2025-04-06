@@ -36,11 +36,11 @@ def preprocess_data(data):
     df['date'] = df['message_date'].dt.date
     df['year'] = df['message_date'].dt.year
     df['month'] = df['message_date'].dt.month_name()
+    df['week'] = df['message_date'].dt.isocalendar().week
     df['day'] = df['message_date'].dt.day
     df['day_name'] = df['message_date'].dt.day_name()
-    df['hour'] = df['message_date'].dt.hour
+    df['hour'] = df['message_date'].dt.strftime('%I')
     df['minute'] = df['message_date'].dt.minute
-    df['meridiem'] = df['message_date'].dt.strftime('%p')
-    
+    df['meridiem'] = df['message_date'].dt.strftime('%p')   
     df.drop(columns=['user_message', 'message_date', ], inplace=True)
     return df
