@@ -7,3 +7,5 @@ seaborn
 urlextract
 wordcloud
 spacy
+emoji
+nltk

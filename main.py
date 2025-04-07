@@ -194,6 +194,7 @@ if uploaded_file is not None:
                 st.markdown("### 👥 Most Active Days")
                 st.bar_chart(busy_day_df[:10], x='day_name', y='count', use_container_width=True, x_label="Day", y_label="Number of Messages")
                 
+        st.markdown("---")
                 
             ################################################################################
             ############################### Most Busy Week & Hour ################################
@@ -302,5 +303,38 @@ if uploaded_file is not None:
             st.pyplot(fig)
             
         st.markdown("---")
-                    
+            ################################################################################
+            ############################### Most Used Words and Emojies Table ##############
+            ################################################################################        
                 
+        with st.spinner("Finding Most Used Words and Emojies..."):
+            
+            st.markdown("### 🗣️ Most Used Words and Emojies")
+            st.markdown("This shows the most used words and emojies in the chat by user.")
+            
+            words_and_emojies_df = utils.most_used_words_and_emojies(df, selected_user)                
+            st.dataframe(words_and_emojies_df, use_container_width=True)
+
+        st.markdown("---")
+            ################################################################################
+            ###################### Sentiment Analysis with table and barchart ##############
+            ################################################################################
+        
+        with st.spinner("Finding Sentiment Analysis..."):
+            
+            st.markdown("### 📊 Sentiment Analysis")
+            st.markdown("This shows the sentiment analysis of the chat.")
+
+            sentiment_df, overal_df = utils.sentiment_analysis(df, selected_user)
+            
+            # Layout for chart and user table
+            col1, col2 = st.columns([2,3])
+
+            with col1:
+                st.markdown("#### Sentiment Analysis")
+                st.bar_chart(overal_df, x='Overall Mood', y='count', use_container_width=True, x_label="Sentiment", y_label="Number of Messages")
+                
+            with col2:
+                st.markdown("#### Sentiment Analysis Table By User")
+                st.dataframe(sentiment_df, use_container_width=True, hide_index=True)
+            

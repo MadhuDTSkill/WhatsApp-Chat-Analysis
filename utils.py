@@ -6,7 +6,17 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import seaborn as sns
 import spacy
+from collections import Counter
+from spacy.lang.en import stop_words
+import emoji
+import re
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import nltk
 
+
+nltk.download('vader_lexicon')
+
+sia = SentimentIntensityAnalyzer()
 nlp = None
 
 try:
@@ -188,3 +198,88 @@ def get_averages(df: pd.DataFrame, selected_user: str):
     avg_messages_per_hour = df.groupby('hour')['message'].count().mean()
     
     return format_number_short(round(avg_messages_per_month, 2)), format_number_short(round(avg_messages_per_day, 2)), format_number_short(round(avg_messages_per_week, 2)), format_number_short(round(avg_messages_per_hour, 2))
+
+
+def most_used_words_and_emojies(df: pd.DataFrame, selected_user: str):
+    
+    if selected_user != 'All':
+        df = df[df['user'] == selected_user]
+    
+    users = []
+    most_used_words = []
+    most_used_emojies = []
+
+    for user in set(df['user'].values.tolist()):
+        users.append(user)
+
+        user_df = df[df['user'] == user]
+        all_messages = user_df[user_df['message'] != '<Media omitted>']['message'].values
+        all_messages = ' '.join(all_messages)
+
+        all_messages_words = re.sub(r'[^\w\s]', '', all_messages).split()
+        all_messages_words = [word for word in all_messages_words if word.lower() not in stop_words.STOP_WORDS]
+        
+        # Most Used Words
+        most_used_words.append(", ".join([item[0] for item in Counter(all_messages_words).most_common(5)]))
+
+        # Most Used Emoji
+        all_messages_emojies = ''.join(c for c in all_messages if emoji.is_emoji(c))
+        most_used_emojies.append(", ".join([item[0] for item in Counter(all_messages_emojies).most_common(5)]))
+
+
+    return pd.DataFrame({'User': users, 'Most Used Words': most_used_words, 'Most Used Emojies': most_used_emojies})
+
+
+def sentiment_analysis(df: pd.DataFrame, selected_user: str):
+    if selected_user != 'All':
+        df = df[df['user'] == selected_user]
+
+    users = []
+    message_counts = []
+    positive_ratio = []
+    neutral_ratio = []
+    negative_ratio = []
+    overall_mood = []
+
+    for user in set(df['user'].values.tolist()):
+        if user.lower() == 'whatsapp':
+            continue
+
+        user_df = df[(df['user'] == user) & (df['message'] != '<Media omitted>')]
+        messages = user_df['message'].values.tolist()
+
+        pos, neu, neg = 0, 0, 0
+
+        for msg in messages:
+            score = sia.polarity_scores(msg)
+            if score['compound'] >= 0.05:
+                pos += 1
+            elif score['compound'] <= -0.05:
+                neg += 1
+            else:
+                neu += 1
+
+        total = len(messages)
+        if total == 0:
+            continue
+
+        users.append(user)
+        message_counts.append(total)
+        positive_ratio.append(f"{round((pos / total) * 100, 2)}%")
+        neutral_ratio.append(f"{round((neu / total) * 100, 2)}%")
+        negative_ratio.append(f"{round((neg / total) * 100, 2)}%")
+
+        mood = max([(pos, '🟡 Positive Vibes Only'), (neu, '⚪ Calm & Collected'), (neg, '🔵 Might Need a Hug')], key=lambda x: x[0])[1]
+        overall_mood.append(mood)
+
+    # Build final DataFrame
+    sentiment_summary = pd.DataFrame({
+        'User': users,
+        'Total Messages': message_counts,
+        'Positive %': positive_ratio,
+        'Neutral %': neutral_ratio,
+        'Negative %': negative_ratio,
+        'Overall Mood': overall_mood
+    })
+    
+    return sentiment_summary, sentiment_summary['Overall Mood'].value_counts().reset_index()
