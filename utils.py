@@ -275,11 +275,35 @@ def sentiment_analysis(df: pd.DataFrame, selected_user: str):
     # Build final DataFrame
     sentiment_summary = pd.DataFrame({
         'User': users,
-        'Total Messages': message_counts,
-        'Positive %': positive_ratio,
-        'Neutral %': neutral_ratio,
-        'Negative %': negative_ratio,
+        'No Messages': message_counts,
+        'Positive': positive_ratio,
+        'Neutral': neutral_ratio,
+        'Negative': negative_ratio,
         'Overall Mood': overall_mood
     })
     
     return sentiment_summary, sentiment_summary['Overall Mood'].value_counts().reset_index()
+
+
+def get_most_mentioned_users(df: pd.DataFrame, selected_user: str):
+    if selected_user != 'All':
+        df = df[df['user'] == selected_user]
+
+    temp_df = df.sort_values(by='date').reset_index(drop=True)
+    users = temp_df['user'].unique().tolist()
+    mentioned_users = []
+    
+    for i in range(len(temp_df) - 1):
+        current_user = temp_df.loc[i, 'user']
+        current_msg = temp_df.loc[i, 'message']
+
+        # Check if message mentions any user (excluding self)
+        for user in users:
+            for word in current_msg.split():
+                if word.lower() in user.lower():
+                    if user != current_user:
+                        mentioned_users.append(user)
+                        
+    mentioned_users_count = Counter(mentioned_users)
+    most_mentioned_users = mentioned_users_count.most_common(10)
+    return most_mentioned_users

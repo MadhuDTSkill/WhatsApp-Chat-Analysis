@@ -338,3 +338,51 @@ if uploaded_file is not None:
                 st.markdown("#### Sentiment Analysis Table By User")
                 st.dataframe(sentiment_df, use_container_width=True, hide_index=True)
             
+            
+            ################################################################################
+            ################## Wordcloud For Most Mentioned users ###########################
+            ################################################################################
+        with st.spinner("Fetching For Most Mentioned users..."):
+
+            st.markdown("### 🗣️ Most Mentioned Users")
+            st.markdown("This wordcloud shows the most frequently used words in the chat. The larger the word, the more frequently it appears.")
+            
+            most_mentioned_users = utils.get_most_mentioned_users(df, selected_user)
+            
+            icons = ['👑', '🥈', '🥉']
+
+            max_count = most_mentioned_users[0][1] if most_mentioned_users else 1
+            min_font = 10
+            max_font = 60
+
+            st.markdown("<div style='text-align:center; margin-bottom: 1rem;'>"
+                        "The bigger the name, the more they were mentioned in the chat!"
+                        "</div>", unsafe_allow_html=True)
+
+            # Display each user
+            for i, (name, count) in enumerate(most_mentioned_users):
+                icon = icons[i] if i < len(icons) else ''
+                
+                # Linear scaling of font size
+                font_size = min_font + ((count / max_count) * (max_font - min_font))
+
+                # Render name, icon, and count
+                st.markdown(
+                    f"""
+                    <div style='
+                        background-color: #262730;
+                        border-radius: 12px;
+                        padding: 5px;
+                        margin-bottom: 12px;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                        text-align: center;
+                        font-size: {font_size}px;
+                        font-weight: 500;
+                        transition: transform 0.2s ease-in-out;
+                    '>
+                        {icon} {name}<br>
+                        <span style='font-size: 0.6em; color: #555;'>{count} mentions</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
